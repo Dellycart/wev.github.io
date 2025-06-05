@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Removed maximum-scale and user-scalable=no for better accessibility on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfect Circle</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css"> <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Inter font from Google Fonts */
@@ -32,7 +34,7 @@
         }
 
         .score-display.hide {
-             animation: score-fade-out 0.3s ease-out forwards;
+            animation: score-fade-out 0.3s ease-out forwards;
         }
 
         @keyframes score-pop-in {
@@ -120,7 +122,7 @@
             <h3 id="messageBoxTitle" class="text-2xl font-bold text-purple-400 mb-4"></h3>
             <p id="messageBoxContent" class="text-gray-200 mb-6"></p>
             <button id="messageBoxClose"
-                    class="game-button px-6 py-3 rounded-full text-lg font-bold shadow-lg transform transition duration-300 ease-in-out hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-75 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                    class="game-button px-6 py-3 rounded-full text-lg font-bold shadow-lg transform transition duration-300 ease-in-out hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-75 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-pink-700 text-white"
                     aria-label="Close message">
                 OK
             </button>

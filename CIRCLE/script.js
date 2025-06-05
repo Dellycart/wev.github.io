@@ -1,5 +1,3 @@
-// script.js
-
 // --- Global Variables and Setup ---
 const backgroundCanvas = document.getElementById('backgroundCanvas');
 const bgCtx = backgroundCanvas.getContext('2d');
@@ -11,7 +9,7 @@ const tryAgainButton = document.getElementById('tryAgainButton');
 const messageDisplay = document.getElementById('messageDisplay');
 const centralScoreDisplayWrapper = document.getElementById('centralScoreDisplayWrapper');
 const centralScoreText = document.getElementById('centralScoreText');
-const scoreMessage = document.getElementById('scoreMessage'); // New element
+const scoreMessage = document.getElementById('scoreMessage');
 const orientationOverlay = document.getElementById('orientation-overlay');
 
 let isDrawing = false;
@@ -25,18 +23,50 @@ let synth, reverb, gainNode;
 
 // --- Utility Functions ---
 
+/**
+ * Resizes both canvases to fit the window and adjusts for device pixel ratio (DPR)
+ * to ensure crisp rendering on high-DPI screens (e.g., Retina displays).
+ * This function should be called on initial load and whenever the window is resized.
+ */
 function resizeCanvases() {
-    backgroundCanvas.width = window.innerWidth;
-    backgroundCanvas.height = window.innerHeight;
-    drawingCanvas.width = window.innerWidth;
-    drawingCanvas.height = window.innerHeight;
-    // Redraw background elements if any static ones
+    // Get the device pixel ratio, defaulting to 1 if not available
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set the CSS (display) size of the canvases
+    backgroundCanvas.style.width = window.innerWidth + 'px';
+    backgroundCanvas.style.height = window.innerHeight + 'px';
+    drawingCanvas.style.width = window.innerWidth + 'px';
+    drawingCanvas.style.height = window.innerHeight + 'px';
+
+    // Set the actual resolution (internal drawing buffer size) of the canvases
+    // This multiplies the CSS size by the DPR for higher resolution on high-DPI screens.
+    backgroundCanvas.width = window.innerWidth * dpr;
+    backgroundCanvas.height = window.innerHeight * dpr;
+    drawingCanvas.width = window.innerWidth * dpr;
+    drawingCanvas.height = window.innerHeight * dpr;
+
+    // Scale the drawing contexts to match the DPR.
+    // This means all subsequent drawing operations (e.g., lineTo, arc) can use CSS pixel coordinates,
+    // and the browser will automatically draw them at the higher device pixel resolution.
+    bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset and apply scale
+    drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset and apply scale
+
+    // Redraw background elements after resize, as the canvas was cleared
     drawBackground();
+
+    // If there's an active drawing or a scored circle displayed, redraw it
+    if (isDrawing && drawingPoints.length > 0) {
+        drawUserPath();
+    } else if (targetCircle) {
+        drawTargetAndUserCircles(targetCircle, drawingPoints);
+    }
 }
 
 function showMessage(text, type = 'info') {
     messageDisplay.textContent = text;
     // Add classes for different message types (e.g., 'text-green-400' for success)
+    // You could expand this to apply different Tailwind classes based on 'type'
+    // e.g., if (type === 'error') messageDisplay.classList.add('text-red-400');
 }
 
 function calculateCircleProperties(points) {
@@ -81,7 +111,8 @@ function calculateCircleScore(drawnPoints, targetCircle) {
     // Normalize deviation to a 0-100 score. This needs careful tuning.
     // Smaller averageDeviation means better score.
     // Max deviation could be something like the canvas diagonal, or a fixed large value.
-    const maxPossibleDeviation = Math.min(window.innerWidth, window.innerHeight) / 2; // Rough estimate
+    // Use the actual CSS dimensions for calculation as points are in CSS pixels
+    const maxPossibleDeviation = Math.min(window.innerWidth, window.innerHeight) / 2;
     let score = Math.max(0, 100 - (averageDeviation / maxPossibleDeviation) * 100);
 
     // Additional checks for circularity and closed loop for higher scores
@@ -107,12 +138,14 @@ function calculateCircleScore(drawnPoints, targetCircle) {
 // --- Drawing Functions ---
 
 function drawBackground() {
+    // Clear the background canvas before redrawing
     bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
     // Draw twinkling stars or subtle nebulae here
     // Example: Random circles for stars
     for (let i = 0; i < 100; i++) {
-        const x = Math.random() * backgroundCanvas.width;
-        const y = Math.random() * backgroundCanvas.height;
+        // Coordinates should be in CSS pixel space, as the context is scaled
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
         const radius = Math.random() * 1.5;
         const opacity = Math.random() * 0.8 + 0.2;
         bgCtx.beginPath();
@@ -123,6 +156,7 @@ function drawBackground() {
 }
 
 function clearDrawingCanvas() {
+    // Clear the drawing canvas before redrawing
     drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
 }
 
@@ -278,10 +312,20 @@ function resetGame() {
 
 // --- Event Handlers ---
 
+/**
+ * Handles pointer down events (mouse or touch).
+ * Prevents default browser behaviors like scrolling/zooming.
+ * Stores the starting point and begins the drawing loop.
+ */
 function handlePointerDown(e) {
-    e.preventDefault(); // Prevent scrolling on touch devices
+    e.preventDefault(); // Prevent default touch/mouse behavior (like scrolling/text selection)
     isDrawing = true;
-    drawingPoints = [{ x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY }];
+    // Get coordinates relative to the canvas element.
+    // These coordinates are in CSS pixels, which is correct because the canvas context is scaled.
+    const rect = drawingCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    drawingPoints = [{ x: x, y: y }]; // Start new drawing path
     messageDisplay.textContent = "Drawing...";
     startButton.style.display = 'none';
     tryAgainButton.style.display = 'none';
@@ -292,20 +336,31 @@ function handlePointerDown(e) {
     // Tone.js: Start drawing sound
     if (synth) {
         synth.triggerAttack('C5'); // Sustain a note
-        // Example: modulate pitch based on cursor position relative to center of screen
-        // This is advanced and requires ongoing calculation
     }
 
     // Start a continuous drawing animation loop
     animationFrameId = requestAnimationFrame(drawLoop);
 }
 
+/**
+ * Handles pointer move events.
+ * Adds new points to the drawing path if currently drawing.
+ */
 function handlePointerMove(e) {
     if (!isDrawing) return;
-    drawingPoints.push({ x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY });
+    // Get coordinates relative to the canvas element.
+    const rect = drawingCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    drawingPoints.push({ x: x, y: y });
     // drawUserPath(); // Redraw only on move, or let requestAnimationFrame handle it
+    // The drawLoop already calls drawUserPath, so no need to call it here.
 }
 
+/**
+ * Handles pointer up or pointer cancel events.
+ * Stops drawing and calculates the score.
+ */
 function handlePointerUp() {
     if (isDrawing) {
         // Tone.js: Stop drawing sound
@@ -314,6 +369,10 @@ function handlePointerUp() {
     }
 }
 
+/**
+ * The main animation loop for drawing the user's path.
+ * Requested by requestAnimationFrame for smooth drawing.
+ */
 function drawLoop() {
     if (isDrawing) {
         drawUserPath();
@@ -322,6 +381,10 @@ function drawLoop() {
 }
 
 // --- Tone.js Initialization ---
+/**
+ * Initializes Tone.js AudioContext.
+ * Must be called after a user gesture (e.g., button click) to bypass browser autoplay policies.
+ */
 async function setupAudio() {
     if (Tone.context.state !== 'running') {
         await Tone.start();
@@ -341,10 +404,12 @@ async function setupAudio() {
     synth.connect(reverb);
 
     // Optional: Global gain node for volume control if needed
-    gainNode = new Tone.Gain(0.8).toDestination();
+    // Connect reverb to gainNode, then gainNode to destination
+    gainNode = new Tone.Gain(0.8);
     reverb.connect(gainNode);
+    gainNode.toDestination();
 
-    // Initial ambient sound (very subtle)
+    // Initial ambient sound (very subtle) - uncomment if desired
     // const ambientSynth = new Tone.PolySynth(Tone.Synth, {
     //     oscillator: { type: "triangle" },
     //     envelope: { attack: 4, decay: 0.5, sustain: 0.2, release: 5 }
@@ -354,42 +419,57 @@ async function setupAudio() {
 
 
 // --- Orientation Check ---
+/**
+ * Checks device orientation and shows an overlay if the device is mobile and in portrait mode.
+ * This prompts the user to rotate their device for a better experience.
+ */
 function checkOrientation() {
-    if (window.innerWidth < window.innerHeight) {
+    // Check if the user agent indicates a mobile device
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // If it's a mobile device AND the height is greater than the width (portrait mode)
+    if (isMobile && window.innerHeight > window.innerWidth) {
         orientationOverlay.classList.remove('hidden');
-    } else {
+    } else { // Landscape or desktop
         orientationOverlay.classList.add('hidden');
     }
 }
 
 // --- Event Listeners ---
+// Listen for window resize events to adjust canvas size and check orientation
 window.addEventListener('resize', () => {
     resizeCanvases();
     checkOrientation();
 });
-window.addEventListener('orientationchange', checkOrientation); // For mobile devices
 
+// Listen for device orientation changes (specific to mobile)
+window.addEventListener('orientationchange', checkOrientation);
+
+// Button event listeners
 startButton.addEventListener('click', startGame);
 tryAgainButton.addEventListener('click', resetGame);
 
+// Drawing canvas event listeners for unified mouse and touch input
 drawingCanvas.addEventListener('pointerdown', handlePointerDown);
 drawingCanvas.addEventListener('pointermove', handlePointerMove);
 drawingCanvas.addEventListener('pointerup', handlePointerUp);
-drawingCanvas.addEventListener('pointercancel', handlePointerUp); // For when pointer leaves bounds
+drawingCanvas.addEventListener('pointercancel', handlePointerUp); // Handles cases where pointer leaves the surface or drawing is interrupted
 
 
-// Initial setup
+// Initial setup when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Initial resize and orientation check
     resizeCanvases();
     checkOrientation();
     drawBackground(); // Initial background draw
     showMessage('Ready to draw a perfect circle!');
 
-    // Initialize Tone.js on first user interaction (e.g., button click)
+    // Initialize Tone.js only on the first user interaction (e.g., first start button click)
+    // This is crucial for satisfying browser autoplay policies for audio.
     startButton.addEventListener('click', () => {
         setupAudio(); // Ensure audio context starts on user gesture
-        startGame();
-    }, { once: true }); // Only run once
+        // The startGame() call is already part of the startButton's primary listener.
+    }, { once: true }); // The { once: true } option ensures this listener only runs once
 });
 
 // Custom message box handling (from your HTML)
@@ -399,23 +479,33 @@ const messageBoxTitle = document.getElementById('messageBoxTitle');
 const messageBoxContent = document.getElementById('messageBoxContent');
 const messageBoxClose = document.getElementById('messageBoxClose');
 
+/**
+ * Displays a custom message box to the user.
+ * @param {string} title - The title of the message box.
+ * @param {string} content - The main content/message to display.
+ */
 function showCustomMessage(title, content) {
     messageBoxTitle.textContent = title;
     messageBoxContent.textContent = content;
     customMessageBox.classList.remove('hidden');
-    // Animate in the message box
+    // Animate in the message box with a slight delay for transition
     setTimeout(() => {
         messageBoxInner.classList.remove('scale-0', 'opacity-0');
-    }, 10); // Small delay for transition
+    }, 10);
 }
 
+/**
+ * Hides the custom message box.
+ */
 function hideCustomMessage() {
     messageBoxInner.classList.add('scale-0', 'opacity-0');
+    // Hide the container after the transition finishes
     setTimeout(() => {
         customMessageBox.classList.add('hidden');
-    }, 300); // Match transition duration
+    }, 300); // Match CSS transition duration
 }
 
+// Attach event listener to close the message box
 messageBoxClose.addEventListener('click', hideCustomMessage);
 
 // Example of how to use custom message:

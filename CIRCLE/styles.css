@@ -1,0 +1,35 @@
+/* style.css */
+
+/* Add specific keyframes if needed for more complex animations not easily done with Tailwind */
+
+/* Example: Particle burst animation (would be triggered by JS) */
+.particle {
+    position: absolute;
+    background-color: white; /* Or gradient, based on cosmic theme */
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    animation: particle-burst 1s forwards; /* Example animation */
+}
+
+@keyframes particle-burst {
+    0% {
+        opacity: 1;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.5);
+        /* Use transform: translate for direction, e.g., translateX(50px) */
+    }
+}
+
+/* More subtle glow for elements that need it */
+.text-glow-subtle {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Ensure canvas takes up full screen if not using fixed */
+canvas {
+    display: block; /* Remove extra space below canvas */
+}

@@ -1,0 +1,250 @@
+/* Overall body styling */
+body {
+    font-family: 'Nunito Sans', sans-serif; /* Friendly font */
+    background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%); /* Light blue gradient background */
+    margin: 0;
+    padding: 20px; /* Add some padding around the game box */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Full viewport height */
+    color: #333; /* Default text color */
+}
+
+/* Main game container styling */
+.game-container {
+    background-color: #ffffff; /* White background for the game box */
+    border-radius: 20px; /* More rounded corners for bloom theme */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Soft, prominent shadow */
+    padding: 40px;
+    width: 100%; /* Make it fluid */
+    max-width: 650px; /* Maximum width for larger screens */
+    text-align: center;
+    box-sizing: border-box; /* Include padding in element's total width and height */
+}
+
+/* Header styles */
+header h1 {
+    color: #4CAF50; /* Vibrant green */
+    margin-bottom: 10px;
+    font-size: 2.8em; /* Larger title */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+header .subtitle {
+    color: #616161; /* Darker grey for readability */
+    margin-bottom: 30px;
+    font-size: 1.1em;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+/* Input area layout */
+.input-area {
+    display: flex;
+    flex-direction: column; /* Stack input and buttons */
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+/* Input field styling */
+#guessInput {
+    padding: 16px;
+    border: 3px solid #8BC34A; /* Green border */
+    border-radius: 12px; /* Rounded input */
+    font-size: 1.3em;
+    text-align: center;
+    width: 80%; /* Responsive width */
+    max-width: 320px; /* Max width for input */
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#guessInput:focus {
+    outline: none;
+    border-color: #689F38; /* Darker green on focus */
+    box-shadow: 0 0 10px rgba(104, 159, 56, 0.4);
+}
+
+/* Button group layout */
+.button-group {
+    display: flex;
+    gap: 20px; /* Space between buttons */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    justify-content: center;
+}
+
+/* Base button styling */
+button {
+    border: none;
+    border-radius: 10px; /* Rounded buttons */
+    padding: 14px 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Button shadow */
+    font-weight: bold;
+}
+
+/* Primary "Bloom!" button */
+.cta-button {
+    background-color: #FFC107; /* Bright yellow */
+    color: #424242; /* Dark text for contrast */
+}
+
+.cta-button:hover {
+    background-color: #FFB300; /* Darker yellow on hover */
+    transform: translateY(-3px); /* Lift effect */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Secondary "Re-Seed" button */
+.secondary-button {
+    background-color: #B2EBF2; /* Light blue */
+    color: #00838F; /* Dark blue text */
+}
+
+.secondary-button:hover {
+    background-color: #80DEEA; /* Darker blue on hover */
+    transform: translateY(-3px); /* Lift effect */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.secondary-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Feedback area styles */
+.feedback-area {
+    margin-bottom: 30px;
+}
+
+.feedback-message {
+    font-size: 1.4em;
+    min-height: 1.8em; /* Ensure consistent height */
+    color: #2196F3; /* Default blue for info */
+    margin-bottom: 15px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.feedback-message.correct {
+    color: #4CAF50; /* Green for correct */
+}
+
+.feedback-message.incorrect {
+    color: #F44336; /* Red for incorrect */
+}
+
+.emoji-display {
+    font-size: 3em; /* Larger emoji */
+    animation: bounceIn 0.6s ease-out; /* Simple entry animation */
+}
+
+/* Animation for emoji */
+@keyframes bounceIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+/* History and Score section layout */
+.history-score-area {
+    display: flex;
+    justify-content: space-around;
+    gap: 25px; /* Space between boxes */
+    flex-wrap: wrap; /* Allow boxes to wrap on smaller screens */
+}
+
+/* Individual history and score box styling */
+.history-box, .score-box {
+    background-color: #FFFDE7; /* Very light yellow for background */
+    border-radius: 15px; /* Rounded corners */
+    padding: 25px;
+    flex: 1; /* Allow boxes to grow and shrink */
+    min-width: 250px; /* Minimum width before wrapping */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #FFECB3; /* Light yellow border */
+}
+
+.history-box h2, .score-box h2 {
+    color: #FF9800; /* Orange heading */
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.guess-list {
+    list-style: none; /* Remove default list bullets */
+    padding: 0;
+    max-height: 150px; /* Limit height for scrollability */
+    overflow-y: auto; /* Enable scrolling for many guesses */
+    margin: 0;
+}
+
+.guess-list li {
+    background-color: #FFF8E1; /* Lighter background for list items */
+    padding: 10px 15px;
+    margin-bottom: 8px; /* Space between items */
+    border-radius: 8px; /* Rounded list items */
+    border: 1px solid #FFECB3;
+    font-size: 1em;
+    color: #616161;
+}
+
+.guess-list li:last-child {
+    margin-bottom: 0; /* No margin for the last item */
+}
+
+.score-box p {
+    font-size: 2.2em; /* Large score display */
+    color: #4CAF50; /* Green score */
+    font-weight: bold;
+    margin: 15px 0 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 550px) {
+    .game-container {
+        padding: 25px; /* Reduce padding on smaller screens */
+    }
+
+    header h1 {
+        font-size: 2em; /* Adjust title size */
+    }
+
+    header .subtitle {
+        font-size: 0.9em;
+    }
+
+    .input-area {
+        flex-direction: column; /* Ensure vertical stacking */
+    }
+
+    .button-group {
+        flex-direction: column; /* Stack buttons vertically */
+        width: 100%;
+        gap: 15px;
+    }
+
+    button {
+        width: 100%; /* Full width buttons */
+        padding: 12px 0;
+    }
+
+    .history-score-area {
+        flex-direction: column; /* Stack history and score boxes */
+        gap: 20px;
+    }
+
+    .history-box, .score-box {
+        min-width: unset; /* Remove min-width to allow full width */
+        width: 100%;
+    }
+}

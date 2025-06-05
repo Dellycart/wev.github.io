@@ -1,0 +1,329 @@
+/* Universal box-sizing for consistent layout */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Body styling: Centering content, setting background, font */
+body {
+    font-family: 'Roboto', sans-serif; /* Using Roboto for a clean, professional look */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Full viewport height */
+    background-color: #f1f2f6; /* Light gray background, inspired by neal.fun */
+    margin: 0;
+    color: #000; /* Default text color */
+    padding: 20px; /* Padding around the content */
+    overflow-x: hidden; /* Prevent horizontal scroll on small screens */
+}
+
+/* Main game container styling */
+.game-container {
+    background-color: #ffffff; /* White background for the game card */
+    padding: 30px;
+    border-radius: 10px; /* Slightly rounded corners */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    text-align: center;
+    max-width: 800px; /* Increased max-width for better content display */
+    width: 100%; /* Fluid width */
+    position: relative; /* For positioning absolute elements like start button */
+    transition: all 0.5s ease-in-out; /* Smooth transitions for state changes */
+    border: 1px solid #e0e0e0; /* Subtle border */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Dimming effect for the game container when start button is active */
+.game-container.dimmed > *:not(.start-button) {
+    opacity: 0.3;
+    pointer-events: none; /* Disable interaction with dimmed elements */
+}
+
+/* Heading styling */
+h1 {
+    color: #333; /* Darker color for main title */
+    margin-bottom: 25px;
+    font-size: 2.8em; /* Larger title */
+    font-weight: 700; /* Bold font weight */
+    line-height: 1.1;
+    /* Optional: wavy text effect if you want to replicate neal.fun's title, requires JS */
+    /* text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
+}
+
+/* Game Scene Area for Visual Graphics */
+.game-scene {
+    position: relative;
+    width: 100%;
+    max-width: 650px; /* Max width for the scene */
+    height: 180px; /* Increased height for better image display */
+    margin: 25px auto 45px auto; /* Centered with generous margin */
+    background-color: #e0e7eb; /* Light grey for ground */
+    border-radius: 8px;
+    overflow: hidden; /* Ensure content stays within bounds */
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* Inner shadow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Track styling */
+.track {
+    position: absolute;
+    width: 100%;
+    height: 6px; /* Thicker tracks for visibility */
+    background-color: #607d8b; /* Dark grey for tracks */
+    transition: all 0.5s ease; /* Smooth transition for track changes */
+    z-index: 2; /* Tracks below trolley and image */
+}
+
+/* Main track position */
+.main-track {
+    bottom: 30%; /* Position towards the bottom of the scene */
+}
+
+/* Diverted track position */
+.diverted-track {
+    top: 30%; /* Position towards the top of the scene */
+    display: none; /* Hidden by default, shown by JS */
+}
+
+/* Trolley styling */
+.trolley {
+    position: absolute;
+    width: 80px; /* Larger trolley */
+    height: 40px;
+    background-color: #ef4444; /* Red color for the trolley */
+    border-radius: 8px; /* Slightly more rounded */
+    top: calc(70% - 20px); /* Initially aligned with main track's center */
+    left: 0; /* Start at the left */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Stronger shadow */
+    transition: transform 3s linear; /* Smooth linear movement for trolley */
+    z-index: 3; /* Ensure trolley is above tracks and image */
+}
+
+/* Scene image styling */
+.scene-image {
+    max-width: 95%; /* Ensure image fits well within the scene */
+    max-height: 95%;
+    object-fit: cover; /* Cover the area, cropping if necessary */
+    border-radius: 5px;
+    opacity: 0.95; /* Slightly less opaque to let background through */
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1; /* Below trolley, above tracks */
+    filter: brightness(0.9); /* Slightly darken image for contrast */
+}
+
+/* Problem description area */
+.problem-display {
+    min-height: 140px; /* More space for longer descriptions */
+    margin-bottom: 40px;
+    font-size: 1.4em; /* Larger font size */
+    line-height: 1.8;
+    background-color: #fcfcfc; /* Very light background for text */
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #ddd; /* Lighter border */
+    width: calc(100% - 40px); /* Full available width, considering padding */
+    max-width: 750px;
+}
+
+/* Choice buttons container */
+.choice-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    justify-content: center;
+    gap: 20px; /* Space between buttons */
+    margin-bottom: 30px;
+    width: 100%; /* Full available width */
+    max-width: 750px;
+}
+
+/* Individual choice button styling */
+.choice-buttons button {
+    background-color: #000; /* Black buttons, matching neal.fun's style */
+    color: white;
+    border: 2px solid #000; /* Explicit border */
+    padding: 20px 35px;
+    border-radius: 5px; /* Less rounded for a crisp look */
+    cursor: pointer;
+    font-size: 1.3em;
+    font-weight: 700; /* Bold text for impact */
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    width: calc(50% - 10px); /* Two buttons per row, considering gap */
+    box-sizing: border-box; /* Include padding and border in width */
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15); /* Stronger shadow */
+    text-transform: uppercase; /* Uppercase text */
+}
+
+.choice-buttons button:hover {
+    background-color: #fff; /* White background on hover */
+    color: #000; /* Black text on hover */
+    border-color: #000; /* Black border on hover */
+    transform: translateY(-3px); /* Slight lift effect */
+}
+
+.choice-buttons button:active {
+    transform: translateY(0); /* Press effect */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Deeper shadow on press */
+}
+
+/* Outcome display area */
+.outcome-display {
+    margin-top: 35px;
+    padding: 30px;
+    background-color: #e6ffe0; /* Light green for outcome */
+    border: 1px solid #b2f1c8; /* Green border */
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    width: calc(100% - 40px);
+    max-width: 750px;
+}
+
+.outcome-display h2 {
+    color: #059669; /* Darker green for outcome title */
+    margin-bottom: 20px;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.outcome-display p {
+    font-size: 1.3em;
+    line-height: 1.7;
+    margin-bottom: 30px;
+}
+
+/* Next Problem button styling */
+#next-problem-button {
+    background-color: #000; /* Black button */
+    color: white;
+    border: 2px solid #000;
+    padding: 15px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: 700;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    text-transform: uppercase;
+}
+
+#next-problem-button:hover {
+    background-color: #fff;
+    color: #000;
+    border-color: #000;
+    transform: translateY(-2px);
+}
+
+#next-problem-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Start button styling */
+.start-button {
+    background-color: #10b981; /* Vibrant green for start button */
+    color: white;
+    border: none;
+    padding: 30px 60px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 2em; /* Very large font for prominence */
+    font-weight: 700;
+    transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.5s ease;
+    position: absolute; /* Position over the dimmed content */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* Ensure it's on top */
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); /* Stronger shadow */
+    text-transform: uppercase;
+}
+
+.start-button:hover {
+    background-color: #047857; /* Darker green on hover */
+    transform: translate(-50%, -50%) scale(1.05); /* More pronounced scale effect */
+}
+
+.start-button:active {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+/* Utility class to hide elements */
+.hidden {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .game-container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    h1 {
+        font-size: 2.2em;
+    }
+
+    .problem-display {
+        font-size: 1.2em;
+    }
+
+    .choice-buttons button {
+        width: 100%; /* Full width buttons on small screens */
+        margin: 5px 0;
+        padding: 15px 25px;
+        font-size: 1.1em;
+    }
+
+    .start-button {
+        padding: 25px 50px;
+        font-size: 1.8em;
+    }
+
+    .game-scene {
+        height: 150px; /* Adjust scene height */
+    }
+
+    .trolley {
+        width: 60px;
+        height: 30px;
+        top: calc(70% - 15px); /* Adjust trolley position */
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .problem-display {
+        font-size: 1.1em;
+        min-height: 100px;
+        padding: 18px;
+    }
+
+    .choice-buttons button {
+        padding: 12px 18px;
+        font-size: 1em;
+    }
+
+    #next-problem-button {
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+    .start-button {
+        padding: 20px 40px;
+        font-size: 1.5em;
+    }
+
+    .game-scene {
+        height: 120px;
+        margin-bottom: 30px;
+    }
+    .trolley {
+        width: 50px;
+        height: 25px;
+        top: calc(70% - 12.5px);
+    }
+}

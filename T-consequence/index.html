@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track of Consequence</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts for a modern, clean look similar to Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Main Game Title -->
+        <h1>Track of Consequence</h1>
+
+        <!-- Visual Game Scene: Contains tracks, problem-specific image, and trolley -->
+        <div id="game-scene" class="game-scene">
+            <div class="track main-track"></div>
+            <div class="track diverted-track"></div>
+            <img id="scene-image" class="scene-image" alt="Trolley Problem Scene">
+            <div id="trolley" class="trolley"></div>
+        </div>
+
+        <!-- Area to display the current trolley problem description -->
+        <div id="problem-display" class="problem-display">
+            <p>Prepare yourself for profound ethical dilemmas, with highly absurd consequences!</p>
+        </div>
+
+        <!-- Container for choice buttons. Initially hidden. -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+            <!-- Choice buttons will be dynamically added here by JavaScript -->
+        </div>
+
+        <!-- Outcome display area. Initially hidden. -->
+        <div id="outcome-display" class="outcome-display hidden">
+            <h2>The Outcome:</h2>
+            <p id="outcome-text"></p>
+            <!-- Button to proceed to the next problem -->
+            <button id="next-problem-button">Next Problem</button>
+        </div>
+
+        <!-- Start Game Button. Initially visible, hides when game starts. -->
+        <button id="start-button" class="start-button">Start</button>
+    </div>
+
+    <!-- Link to the JavaScript file for game logic -->
+    <script src="script.js"></script>
+</body>
+</html>

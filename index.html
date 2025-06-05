@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wevnex.fun</title>
+  <meta name="description" content="Interactive mini projects and tools made for fun" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="letter-w (1).png" type="image/x-icon" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header>
+    <h1>WEVNEX.FUN</h1>
+    <div id="greeting">👋 Good day!</div>
+    <button id="darkModeToggle" aria-label="Toggle Dark Mode">🌙</button>
+  </header>
+
+  <main class="grid">
+    <a href="Guess Number/guess-number.html" class="card">
+      <img src="Guess Number/guess nu.png" alt="Guess Number" />
+      <div class="card-title">🎯 Guess the Number</div>
+    </a>
+    <a href="CIRCLE/index.html" class="card">
+      <img src="circle thumbnail.png" alt="Perfect Circle" />
+      <div class="card-title">Perfect Circle</div>
+    </a>
+    <a href="Clicker game/clicker.html" class="card">
+      <img src="Clicker game/clicker.png" alt="Clicker Game" />
+      <div class="card-title">🖱️ Clicker Game</div>
+    </a>
+     <a href="T-consequence/index.html" class="card">
+      <img src="T-consequence/track- concq.png" alt="Track of Consequence" />
+      <div class="card-title">Track of Consequence</div>
+    </a>
+    </a>
+  </main>
+
+  <div class="floating-badge" onclick="openNewsletterModal()">✨ Subscribe!</div>
+
+  <div id="newsletterModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeNewsletterModal()">&times;</span>
+      <h2>Get new posts in your inbox!</h2>
+
+      <form id="formspree.io/f/mgvyvrgb">
+  <input type="email" name="email" id="newsletterEmail" placeholder="Your email" required />
+  <button type="submit">Subscribe</button>
+</form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://www.buymeacoffee.com/yourname" target="_blank">☕ Buy Me a Coffee</a>
+      <a href="https://twitter.com/yourhandle" target="_blank">🐦 Twitter</a>
+      <a href="privacy.html">📄 Privacy Policy</a>
+    </div>
+    <div>© Made with ❤️ by Wevenex</div>
+  </footer>
+</body>
+</html>

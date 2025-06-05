@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guess the Number: Vibrant Bloom Game</title>
+    <!-- Favicon: Using an emoji as a fallback for a flower image -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>" />
+    
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Google Font: Nunito Sans for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🌸 Guess the Number! 🌼</h1>
+            <p class="subtitle">I'm holding a secret number, like a tiny seed, between <strong>1 and 100</strong>. Can you help it bloom?</p>
+        </header>
+
+        <section class="input-area">
+            <input type="number" id="guessInput" placeholder="Enter your petal number" min="1" max="100" aria-label="Enter your guess" />
+            <div class="button-group">
+                <button id="guessButton" class="cta-button">Bloom!</button>
+                <button id="restartButton" class="secondary-button">Re-Seed</button>
+            </div>
+        </section>
+
+        <section class="feedback-area">
+            <div id="feedback" class="feedback-message"></div>
+            <div id="emoji" class="emoji-display">🎯</div> <!-- Initial emoji -->
+        </section>
+
+        <section class="history-score-area">
+            <div class="history-box">
+                <h2>Your Attempts</h2>
+                <ul id="history" class="guess-list">
+                    <!-- Guess history items will be added here by JavaScript -->
+                </ul>
+            </div>
+            <div class="score-box">
+                <h2>Score</h2>
+                <p id="score">0</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js" defer></script> <!-- Link to JavaScript file -->
+</body>
+</html>

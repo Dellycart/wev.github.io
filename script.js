@@ -7,40 +7,42 @@ const drawingCanvas = document.getElementById('drawingCanvas');
 const drawCtx = drawingCanvas.getContext('2d');
 
 const startButton = document.getElementById('startButton');
-const tryAgainButton = document.getElementById('tryAgainButton');
 const messageDisplay = document.getElementById('messageDisplay');
 const centralScoreDisplayWrapper = document.getElementById('centralScoreDisplayWrapper');
 const centralScoreText = document.getElementById('centralScoreText');
 const scoreMessage = document.getElementById('scoreMessage');
-const highScoreDisplay = document.getElementById('highScoreDisplay'); 
-const orientationOverlay = document.getElementById('orientation-overlay');
+const highScoreDisplay = document.getElementById('highScoreDisplay');
+
+const audioToggleButton = document.querySelector('#audioToggleButton button'); // Get the button element
+const audioToggleIcon = audioToggleButton.querySelector('i'); // Get the icon element inside the button
+const accuracyMeterWrapper = document.getElementById('accuracyMeterWrapper'); // Wrapper for the numerical accuracy
+const accuracyMeterValue = document.getElementById('accuracyMeterValue'); // Span to display accuracy text
 
 let isDrawing = false;
 let drawingPoints = [];
-let animationFrameId;
+let animationFrameId; // For drawing loop
+let backgroundAnimationFrameId; // For background animation loop
 
-let targetCircle = null; // Stores {x, y, radius} of the ideal circle
-let currentDrawingColor; // This is now used for the *overall* line color selection (not gradient)
-const drawingColors = [ // Array of base colors for line aesthetics (now used for the start/end of the accuracy gradient)
-    '#FFD700', // Gold
-    '#ADFF2F', // GreenYellow
-    '#00FFFF', // Cyan
-    '#FF69B4', // HotPink
-    '#8A2BE2', // BlueViolet
-    '#F4A460', // SandyBrown
-    '#90EE90', // LightGreen
-    '#FF4500'  // OrangeRed
-];
-let currentColorIndex = 0; // Index to cycle through drawingColors for initial color
-
-let highScore = 0; // Stores the high score, initialized on load
+let targetCircle = null; // Stores {x, y, radius} of the ideal circle.
 
 // Tone.js setup
 let synth, reverb, gainNode;
+let isSoundEnabled = true; // State for sound toggle
 
 // Define an accuracy color scale (Red -> Yellow -> Green)
 const accuracyColorScale = ['#FF0000', '#FFFF00', '#00FF00']; // Red (bad), Yellow (okay), Green (good)
 
+let highScore = 0; // Stores the high score, initialized on load
+
+// Nebula background parameters
+const nebulaParticles = [];
+const NUM_NEBULA_PARTICLES = 50; // Fewer for performance on mobile
+const NEBULA_COLORS = [
+    [255, 0, 255], // Magenta
+    [0, 255, 255], // Cyan
+    [100, 0, 255], // Purple
+    [255, 100, 0]  // Orange
+];
 
 // --- Utility Functions ---
 
@@ -60,7 +62,7 @@ function lerpColor(color1, color2, amount) {
         R2 = t >> 16,
         G2 = (t >> 8) & 0x00FF,
         B2 = t & 0x0000FF;
-    
+
     const R = Math.round((R2 - R1) * amount) + R1;
     const G = Math.round((G2 - G1) * amount) + G1;
     const B = Math.round((B2 - B1) * amount) + B1;
@@ -81,7 +83,7 @@ function lerpColor(color1, color2, amount) {
 function mapValueToColor(value, spectrum, minVal, maxVal) {
     const clampedValue = Math.max(minVal, Math.min(maxVal, value));
     const normalizedValue = (clampedValue - minVal) / (maxVal - minVal); // Normalize to 0 to 1
-    
+
     if (spectrum.length === 1) return spectrum[0];
     if (spectrum.length === 0) return '#FFFFFF'; // Default white
 
@@ -94,42 +96,42 @@ function mapValueToColor(value, spectrum, minVal, maxVal) {
     if (segmentIndex >= spectrum.length - 1) {
         return spectrum[spectrum.length - 1]; // Return the last color if at or beyond max
     }
-    
+
     // Interpolate between the two colors of the current segment
     return lerpColor(spectrum[segmentIndex], spectrum[segmentIndex + 1], segmentAmount);
 }
 
 /**
- * Resizes both canvases to fit the window and adjusts for device pixel ratio (DPR)
+ * Resizes all canvases to fit the window and adjusts for device pixel ratio (DPR)
  * to ensure crisp rendering on high-DPI screens (e.g., Retina displays).
  * This function should be called on initial load and whenever the window is resized.
  */
 function resizeCanvases() {
-    // Get the device pixel ratio, defaulting to 1 if not available.
     const dpr = window.devicePixelRatio || 1;
 
-    // Set the CSS (display) size of the canvases.
+    // Set CSS (display) size for all canvases
     backgroundCanvas.style.width = window.innerWidth + 'px';
     backgroundCanvas.style.height = window.innerHeight + 'px';
     drawingCanvas.style.width = window.innerWidth + 'px';
     drawingCanvas.style.height = window.innerHeight + 'px';
 
-    // Set the actual resolution (internal drawing buffer size) of the canvases.
+    // Set actual resolution (internal drawing buffer size) for all canvases
     backgroundCanvas.width = window.innerWidth * dpr;
     backgroundCanvas.height = window.innerHeight * dpr;
     drawingCanvas.width = window.innerWidth * dpr;
     drawingCanvas.height = window.innerHeight * dpr;
 
-    // Scale the drawing contexts to match the DPR.
+    // Scale the drawing contexts to match the DPR
     bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    drawBackground();
+    // Reinitialize nebula particles for new dimensions
+    initNebulaParticles();
 
+    // Redraw the background and user path if necessary
+    drawBackground();
     if (isDrawing && drawingPoints.length > 0) {
-        drawUserPath(); // Redraw the current path if drawing
-    } else if (targetCircle) {
-        drawTargetAndUserCircles(targetCircle, drawingPoints); // Redraw final result
+        drawUserPath();
     }
 }
 
@@ -140,26 +142,26 @@ function resizeCanvases() {
  */
 function showMessage(text, type = 'info') {
     messageDisplay.textContent = text;
-    messageDisplay.classList.remove('text-red-400', 'text-yellow-400', 'text-gray-300', 'text-blue-300'); // Remove all possible previous classes
+    messageDisplay.classList.remove('text-red-400', 'text-yellow-400', 'text-gray-300', 'text-blue-300', 'live-accuracy', 'text-green-400');
     if (type === 'error') {
         messageDisplay.classList.add('text-red-400');
     } else if (type === 'warning') {
         messageDisplay.classList.add('text-yellow-400');
     } else if (type === 'info') {
-        messageDisplay.classList.add('text-blue-300'); // Use blue for info/live accuracy
-    } else {
-        messageDisplay.classList.add('text-gray-300');
+        messageDisplay.classList.add('text-blue-300');
+    } else if (type === 'success') {
+        messageDisplay.classList.add('text-green-400');
     }
 }
 
 /**
  * Calculates the properties (center and radius) of a circle that best fits a given set of points.
- * This is a simplified approach; a more advanced fitting algorithm would yield better results.
+ * This function calculates the center and radius from the drawn points.
  * @param {Array<Object>} points - An array of {x, y} coordinates drawn by the user.
  * @returns {Object|null} An object {x, y, radius} representing the fitted circle, or null if not enough points.
  */
 function calculateCircleProperties(points) {
-    if (points.length < 3) return null; // Need at least 3 points to define a circle
+    if (points.length < 3) return null;
 
     let sumX = 0, sumY = 0;
     for (let p of points) {
@@ -186,7 +188,7 @@ function calculateCircleProperties(points) {
  * @returns {number} The score (0-100), or -1 if the shape is clearly not a circle.
  */
 function calculateCircleScore(drawnPoints, targetCircle) {
-    if (drawnPoints.length < 30 || !targetCircle || targetCircle.radius < 10) {
+    if (drawnPoints.length < 20 || !targetCircle || targetCircle.radius < 5) {
         return -1;
     }
 
@@ -235,7 +237,7 @@ function calculateCircleScore(drawnPoints, targetCircle) {
 
     const startToEndDistance = Math.sqrt(Math.pow(drawnPoints[0].x - drawnPoints[drawnPoints.length - 1].x, 2) +
                                           Math.pow(drawnPoints[0].y - drawnPoints[drawnPoints.length - 1].y, 2));
-    const closureThreshold = targetCircle.radius * 0.3;
+    const closureThreshold = targetCircle.radius * 0.4;
     if (startToEndDistance > closureThreshold) {
         penalty += Math.min( (startToEndDistance / targetCircle.radius) * 20, 40);
     }
@@ -249,19 +251,19 @@ function calculateCircleScore(drawnPoints, targetCircle) {
     }
     const targetCircumference = 2 * Math.PI * targetCircle.radius;
 
-    if (drawnPathLength < targetCircumference * 0.6 || drawnPathLength > targetCircumference * 2.0) {
+    if (drawnPathLength < targetCircumference * 0.5 || drawnPathLength > targetCircumference * 2.5) {
         penalty += (1 - Math.min(drawnPathLength / targetCircumference, targetCircumference / drawnPathLength)) * 100 * 0.5;
         penalty = Math.min(penalty, 50);
     }
 
     const maxDimension = Math.min(window.innerWidth, window.innerHeight);
-    const normalizedAverageDeviation = averageDeviation / (maxDimension / 4);
+    const normalizedAverageDeviation = averageDeviation / (maxDimension * 0.1);
     let baseScore = Math.max(0, 100 - (normalizedAverageDeviation * 100));
 
     let finalScore = baseScore - penalty;
     finalScore = Math.max(0, finalScore);
 
-    if (finalScore < 50 || aspectRatio < 0.4 || normalizedStdDev > 0.4 || targetCircle.radius / maxDimension < 0.05) {
+    if (finalScore < 30 || aspectRatio < 0.2 || normalizedStdDev > 0.6 || targetCircle.radius / maxDimension < 0.02) {
         return -1;
     }
 
@@ -269,24 +271,83 @@ function calculateCircleScore(drawnPoints, targetCircle) {
 }
 
 
-// --- Drawing Functions ---
+// --- Background Animation Functions (Nebula) ---
 
 /**
- * Draws the subtle background elements (e.g., twinkling stars) on the background canvas.
- * Clears the canvas before drawing.
+ * Initializes nebula particles with random properties.
+ */
+function initNebulaParticles() {
+    nebulaParticles.length = 0; // Clear existing particles
+    for (let i = 0; i < NUM_NEBULA_PARTICLES; i++) {
+        nebulaParticles.push({
+            x: Math.random() * backgroundCanvas.width,
+            y: Math.random() * backgroundCanvas.height,
+            radius: Math.random() * 100 + 50, // Larger for nebula clouds
+            colorIndex: Math.floor(Math.random() * NEBULA_COLORS.length),
+            opacity: Math.random() * 0.1 + 0.05, // Very subtle opacity
+            speedX: (Math.random() - 0.5) * 0.2, // Slow movement
+            speedY: (Math.random() - 0.5) * 0.2,
+            growthRate: (Math.random() - 0.5) * 0.1 // Subtle size change
+        });
+    }
+}
+
+/**
+ * Draws the dynamic cosmic/nebula background.
  */
 function drawBackground() {
     bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
-    for (let i = 0; i < 100; i++) {
-        const x = Math.random() * window.innerWidth;
-        const y = Math.random() * window.innerHeight;
-        const radius = Math.random() * 1.5;
-        const opacity = Math.random() * 0.8 + 0.2;
+
+    // Draw swirling nebula clouds
+    for (let i = 0; i < nebulaParticles.length; i++) {
+        const p = nebulaParticles[i];
+        const color = NEBULA_COLORS[p.colorIndex];
+
+        const gradient = bgCtx.createRadialGradient(p.x, p.y, p.radius * 0.1, p.x, p.y, p.radius);
+        gradient.addColorStop(0, `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${p.opacity})`);
+        gradient.addColorStop(1, `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0)`);
+
+        bgCtx.fillStyle = gradient;
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        bgCtx.fill();
+
+        // Update particle position and size
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.radius += p.growthRate;
+
+        // Wrap around screen if out of bounds
+        if (p.x > backgroundCanvas.width + p.radius) p.x = -p.radius;
+        if (p.x < -p.radius) p.x = backgroundCanvas.width + p.radius;
+        if (p.y > backgroundCanvas.height + p.radius) p.y = -p.radius;
+        if (p.y < -p.radius) p.y = backgroundCanvas.height + p.radius;
+
+        // Reset radius if it gets too big/small
+        if (p.radius > 200 || p.radius < 50) {
+            p.growthRate *= -1; // Reverse growth
+        }
+    }
+
+    // Add static twinkling stars (optional, or make them very subtle)
+    for (let i = 0; i < 50; i++) {
+        const x = Math.random() * backgroundCanvas.width;
+        const y = Math.random() * backgroundCanvas.height;
+        const radius = Math.random() * 1.0;
+        const opacity = Math.random() * 0.6 + 0.1;
         bgCtx.beginPath();
         bgCtx.arc(x, y, radius, 0, Math.PI * 2);
         bgCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
         bgCtx.fill();
     }
+}
+
+/**
+ * Main loop for animating the background.
+ */
+function animateBackground() {
+    drawBackground();
+    backgroundAnimationFrameId = requestAnimationFrame(animateBackground);
 }
 
 /**
@@ -296,84 +357,172 @@ function clearDrawingCanvas() {
     drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
 }
 
+// Trail particles for the drawing line
+const trailParticles = [];
+const MAX_TRAIL_PARTICLES = 30; // Max number of small particles for the trail
+
 /**
- * Draws the user's freehand path on the drawing canvas.
- * Applies glow and styling to the line using a dynamic gradient based on local accuracy.
+ * Draws the user's freehand path on the drawing canvas with an "energy trail" effect.
+ * Applies dynamic glow, thickness, and emits small particles.
  */
 function drawUserPath() {
-    clearDrawingCanvas();
+    clearDrawingCanvas(); // Clear to redraw everything each frame
+
     if (drawingPoints.length < 2) return;
 
-    // Use a provisional target circle based on all points drawn so far
-    let provisionalTargetCircle = calculateCircleProperties(drawingPoints); 
+    // The provisional target circle is always calculated based on all drawn points
+    let provisionalTargetCircle = calculateCircleProperties(drawingPoints);
 
-    drawCtx.lineWidth = 4; // Made line thicker from 2 to 4
+    // --- Draw Ghost Target Circle (Subtle Guide) ---
+    if (provisionalTargetCircle && provisionalTargetCircle.radius > 10) {
+        drawCtx.beginPath();
+        drawCtx.arc(provisionalTargetCircle.x, provisionalTargetCircle.y, provisionalTargetCircle.radius, 0, Math.PI * 2);
+        drawCtx.strokeStyle = `rgba(100, 150, 255, ${Math.min(0.05 + drawingPoints.length / 5000, 0.2)})`; // Fades in very subtly
+        drawCtx.lineWidth = 1;
+        drawCtx.shadowBlur = 0;
+        drawCtx.shadowColor = 'transparent';
+        drawCtx.stroke();
+    }
+
     drawCtx.lineCap = 'round';
     drawCtx.lineJoin = 'round';
 
-    // Loop to draw segments, applying color based on local accuracy
     for (let i = 1; i < drawingPoints.length; i++) {
         const p1 = drawingPoints[i - 1];
         const p2 = drawingPoints[i];
 
-        // Only apply accuracy-based coloring if we have a provisional target circle
-        // and its radius is meaningful. Otherwise, use a neutral color.
+        let segmentColor = 'rgba(255, 255, 255, 0.5)'; // Default for very early drawing
+        let lineWidth = 3; // Base line width, slightly thicker
+        let shadowBlur = 0; // Default shadow blur
+
         if (provisionalTargetCircle && provisionalTargetCircle.radius > 10) {
-            // Calculate deviation of the current point (p2) from the provisional target circle
             const distanceToCenter = Math.sqrt(Math.pow(p2.x - provisionalTargetCircle.x, 2) + Math.pow(p2.y - provisionalTargetCircle.y, 2));
             const deviation = Math.abs(distanceToCenter - provisionalTargetCircle.radius);
 
-            // Define a max expected deviation for color mapping. Adjust this value
-            // to make the gradient more or less sensitive to deviation.
-            const maxExpectedDeviation = Math.min(window.innerWidth, window.innerHeight) * 0.1; // 10% of smaller screen dimension
-
-            // Map deviation to an accuracy value (higher accuracy = lower deviation)
-            // Invert deviation: 0 deviation = 100 accuracy, maxDeviation = 0 accuracy
+            const maxExpectedDeviation = Math.min(window.innerWidth, window.innerHeight) * 0.1;
             let accuracyValue = Math.max(0, 100 - (deviation / maxExpectedDeviation) * 100);
-            
-            // Get color based on accuracy using the accuracyColorScale
-            const segmentColor = mapValueToColor(accuracyValue, accuracyColorScale, 0, 100);
 
-            drawCtx.beginPath();
-            drawCtx.moveTo(p1.x, p1.y);
-            drawCtx.lineTo(p2.x, p2.y);
+            segmentColor = mapValueToColor(accuracyValue, accuracyColorScale, 0, 100);
 
-            drawCtx.strokeStyle = segmentColor;
-            drawCtx.shadowBlur = 8; // Slightly less blur than before, for multiple segments
+            // Dynamic Line Thickness (3 to 8 pixels)
+            lineWidth = 3 + (accuracyValue / 100) * 5; // Scales from 3px (0% accuracy) to 8px (100% accuracy)
+            lineWidth = Math.max(3, Math.min(8, lineWidth)); // Clamp values
+
+            // Dynamic Glow (0 to 20 blur)
+            shadowBlur = (accuracyValue / 100) * 20; // Scales from 0 (0% accuracy) to 20 (100% accuracy)
+            shadowBlur = Math.max(0, Math.min(20, shadowBlur)); // Clamp values
             drawCtx.shadowColor = segmentColor; // Shadow matches segment color
-            drawCtx.stroke();
         } else {
-            // If no provisional target circle yet (very early drawing), draw in a neutral color
-            drawCtx.beginPath();
-            drawCtx.moveTo(p1.x, p1.y);
-            drawCtx.lineTo(p2.x, p2.y);
-            drawCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Light grey for initial segments
-            drawCtx.shadowBlur = 0;
-            drawCtx.shadowColor = 'transparent';
-            drawCtx.stroke();
+             drawCtx.shadowColor = 'transparent';
         }
+
+        drawCtx.beginPath();
+        drawCtx.moveTo(p1.x, p1.y);
+        drawCtx.lineTo(p2.x, p2.y);
+
+        drawCtx.strokeStyle = segmentColor;
+        drawCtx.lineWidth = lineWidth;
+        drawCtx.shadowBlur = shadowBlur;
+        drawCtx.stroke();
     }
     // Reset shadow after drawing all segments
     drawCtx.shadowBlur = 0;
     drawCtx.shadowColor = 'transparent';
-}
 
-/**
- * Draws both the calculated target circle and the user's drawn path.
- * Used after the drawing is finished and scored.
- * @param {Object} target - The calculated ideal circle {x, y, radius}.
- * @param {Array<Object>} userPoints - The points drawn by the user.
- */
-function drawTargetAndUserCircles(target, userPoints) {
-    clearDrawingCanvas();
+    // Add new trail particles from the current drawing point
+    if (isDrawing && drawingPoints.length > 0) {
+        const lastPoint = drawingPoints[drawingPoints.length - 1];
+        const currentAccuracy = calculateCircleScore(drawingPoints, provisionalTargetCircle);
+        const particleColor = mapValueToColor(currentAccuracy !== -1 ? currentAccuracy : 0, accuracyColorScale, 0, 100);
 
-    if (userPoints.length > 1) {
-        // Only redraw the user's path, do not draw the target circle.
-        drawUserPath();
+        // Add a few particles per frame, but not too many
+        for (let j = 0; j < Math.random() * 2; j++) { // Randomly 0 or 1 particle per frame
+            trailParticles.push({
+                x: lastPoint.x,
+                y: lastPoint.y,
+                size: Math.random() * 3 + 1, // Size from 1 to 4
+                color: particleColor,
+                opacity: 1,
+                vx: (Math.random() - 0.5) * 5, // Random initial velocity
+                vy: (Math.random() - 0.5) * 5,
+                life: 60 // Frames to live
+            });
+        }
+        // Limit total particles to prevent performance issues
+        while (trailParticles.length > MAX_TRAIL_PARTICLES) {
+            trailParticles.shift();
+        }
     }
 
-    // Removed the code that draws the purple target circle here.
+    // Draw and update existing trail particles
+    for (let i = trailParticles.length - 1; i >= 0; i--) {
+        const p = trailParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.opacity -= 1 / p.life; // Fade over time
+        p.size *= 0.98; // Shrink slightly
+
+        drawCtx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.opacity})`;
+        drawCtx.beginPath();
+        drawCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        drawCtx.fill();
+
+        if (p.opacity <= 0 || p.size <= 0.5) {
+            trailParticles.splice(i, 1); // Remove dead particles
+        }
+    }
 }
+
+
+/**
+ * Animates the "birth" of a perfect circle for high scores.
+ * @param {Object} circleProps - The {x, y, radius} of the circle to animate.
+ */
+function animatePerfectCircleBirth(circleProps) {
+    let animationProgress = 0;
+    const duration = 120; // Animation duration in frames
+
+    const birthAnimationLoop = () => {
+        clearDrawingCanvas(); // Clear drawing canvas for this animation
+
+        // Draw the expanding, glowing circle
+        const currentRadius = circleProps.radius * (animationProgress / duration);
+        const opacity = Math.sin(Math.PI * (animationProgress / duration)); // Fade in and out
+
+        drawCtx.beginPath();
+        drawCtx.arc(circleProps.x, circleProps.y, currentRadius, 0, Math.PI * 2);
+        drawCtx.strokeStyle = `rgba(150, 255, 255, ${opacity * 0.8})`; // Bright cyan/white
+        drawCtx.lineWidth = 5 + (animationProgress / duration) * 10; // Thicker line
+        drawCtx.shadowBlur = 30 + (animationProgress / duration) * 20; // Stronger glow
+        drawCtx.shadowColor = `rgba(150, 255, 255, ${opacity})`;
+        drawCtx.stroke();
+
+        // Emit strong particles from the circle's circumference
+        if (animationProgress % 5 === 0) { // Emit particles periodically
+            for (let i = 0; i < 10; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const px = circleProps.x + currentRadius * Math.cos(angle);
+                const py = circleProps.y + currentRadius * Math.sin(angle);
+                createParticleEffect(px, py, 1, 'rgba(255, 255, 100, 1)'); // Bright yellow particles
+            }
+        }
+
+        animationProgress++;
+        if (animationProgress <= duration) {
+            requestAnimationFrame(birthAnimationLoop);
+        } else {
+            clearDrawingCanvas(); // Clear animation artifacts
+            // Re-draw the final user path if needed after animation
+            if (drawingPoints.length > 0) {
+                drawUserPath();
+            }
+            // Now, display the score
+            displayScoreFinalState(scoreBeingDisplayed); // Call the function to show the score
+        }
+    };
+    requestAnimationFrame(birthAnimationLoop);
+}
+
 
 /**
  * Creates a particle burst effect at a given origin.
@@ -404,8 +553,8 @@ function createParticleEffect(originX, originY, count = 30, color = '#FFFFFF') {
 
         particle.style.setProperty('--particle-end-transform-x', `${translateX}px`);
         particle.style.setProperty('--particle-end-transform-y', `${translateY}px`);
-        
-        particle.style.animation = `particle-burst 1s forwards ${i * 0.02}s`; 
+
+        particle.style.animation = `particle-burst 1s forwards ${i * 0.02}s`;
 
         container.appendChild(particle);
 
@@ -432,16 +581,61 @@ function loadHighScore() {
 /**
  * Saves the current high score to localStorage.
  * @param {number} score - The score to potentially save as high score.
+ * @returns {boolean} True if a new high score was set, false otherwise.
  */
 function saveHighScore(score) {
+    let newRecord = false;
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('perfectCircleHighScore', highScore.toString());
         highScoreDisplay.textContent = `High Score: ${highScore}%`;
+        newRecord = true;
+    }
+    return newRecord;
+}
+
+// --- Audio Toggle Functionality ---
+/**
+ * Toggles the background sound on and off.
+ */
+function toggleSound() {
+    isSoundEnabled = !isSoundEnabled;
+    if (isSoundEnabled) {
+        audioToggleIcon.classList.remove('fa-volume-mute');
+        audioToggleIcon.classList.add('fa-volume-up');
+        audioToggleButton.classList.remove('audio-off');
+        audioToggleButton.classList.add('audio-on', 'pulse-animation'); // Add pulse animation
+        if (Tone.context.state !== 'running') {
+            setupAudio();
+        }
+    } else {
+        audioToggleIcon.classList.remove('fa-volume-up');
+        audioToggleIcon.classList.add('fa-volume-mute');
+        audioToggleButton.classList.remove('audio-on', 'pulse-animation'); // Remove pulse animation
+        audioToggleButton.classList.add('audio-off');
+        if (synth) synth.triggerRelease(); // Release any currently playing notes
     }
 }
 
+// --- Accuracy Meter Functionality (Numerical Only) ---
+/**
+ * Updates the real-time accuracy meter display.
+ * @param {number} currentAccuracy - The current accuracy percentage.
+ */
+function updateAccuracyMeter(currentAccuracy = 0) {
+    if (!isDrawing || currentAccuracy === -1) { // Hide if not drawing or accuracy is invalid
+        accuracyMeterWrapper.classList.add('hidden');
+        return;
+    }
+
+    accuracyMeterValue.textContent = `${currentAccuracy}%`;
+    accuracyMeterValue.style.color = mapValueToColor(currentAccuracy, accuracyColorScale, 0, 100);
+    accuracyMeterWrapper.classList.remove('hidden'); // Ensure it's visible during drawing
+}
+
+
 // --- Game State Management ---
+let scoreBeingDisplayed = 0; // Temporary storage for score during animation
 
 /**
  * Starts a new game round. Resets drawing state and UI.
@@ -450,18 +644,18 @@ function startGame() {
     clearDrawingCanvas();
     drawingPoints = [];
     isDrawing = false;
-    messageDisplay.textContent = 'Draw a perfect circle! Click or touch to start.';
-    startButton.style.display = 'none';
-    tryAgainButton.style.display = 'none';
+    messageDisplay.textContent = 'Draw a perfect circle!';
+    startButton.style.display = 'none'; // Hide the start button while drawing
     centralScoreDisplayWrapper.classList.add('hidden');
     centralScoreText.classList.remove('show', 'hide');
     scoreMessage.classList.add('hidden');
-    highScoreDisplay.classList.remove('hidden');
+    highScoreDisplay.classList.remove('hidden'); // Keep high score visible
 
-    // Cycle to the next drawing color for the initial gradient base (though actual gradient changes by accuracy)
-    currentColorIndex = (currentColorIndex + 1) % drawingColors.length;
+    // Show the live accuracy meter
+    accuracyMeterWrapper.classList.remove('hidden');
+    updateAccuracyMeter(0); // Reset meter to 0% at start
 
-    if (synth) synth.triggerAttackRelease('C4', '8n');
+    if (isSoundEnabled && synth) synth.triggerAttackRelease('C4', '8n');
 }
 
 /**
@@ -473,35 +667,54 @@ function finishDrawing() {
     isDrawing = false;
     cancelAnimationFrame(animationFrameId); // Stop the drawing animation loop
 
-    // Calculate the final best-fit circle for scoring
+    // Hide the live accuracy meter
+    accuracyMeterWrapper.classList.add('hidden');
+
+    // Calculate the final best-fit circle based on all drawn points (auto-calculated center)
     targetCircle = calculateCircleProperties(drawingPoints);
 
-    const score = calculateCircleScore(drawingPoints, targetCircle);
+    scoreBeingDisplayed = calculateCircleScore(drawingPoints, targetCircle);
 
-    if (score === -1) {
-        showMessage("Incorrect Shape! Please draw a circle.", 'error');
-        clearDrawingCanvas();
-        if (synth) synth.triggerAttackRelease('F#3', '16n');
+    if (scoreBeingDisplayed === -1) {
+        showMessage("Try again! Your drawing wasn't quite a circle.", 'error');
+        clearDrawingCanvas(); // Clear the canvas immediately for a fresh start
+        if (isSoundEnabled && synth) synth.triggerAttackRelease('F#3', '16n');
+        startButton.style.display = 'block'; // Show the start button again
+        return; // Exit early if score is invalid
+    }
+
+    const newRecord = saveHighScore(scoreBeingDisplayed); // Save score and check for new record
+
+    // If it's a high score (80% or above), trigger birth animation
+    if (scoreBeingDisplayed >= 80) {
+        animatePerfectCircleBirth(targetCircle); // Pass the final calculated circle
+        if (newRecord && isSoundEnabled && synth) {
+            synth.triggerAttackRelease('G6', '2n'); // Special sound for new record
+        } else if (isSoundEnabled && synth) {
+            // Play regular score sound if not new record, but still high score
+            if (scoreBeingDisplayed >= 95) {
+                synth.triggerAttackRelease('G5', '4n');
+            } else if (scoreBeingDisplayed >= 80) {
+                synth.triggerAttackRelease('E5', '8n');
+            }
+        }
     } else {
-        displayScore(score);
-        drawTargetAndUserCircles(targetCircle, drawingPoints); // Re-draw with final targetCircle for accurate visual comparison
-        saveHighScore(score);
-        if (score >= 95) {
-            if (synth) synth.triggerAttackRelease('G5', '4n');
-        } else if (score >= 80) {
-            if (synth) synth.triggerAttackRelease('E5', '8n');
-        } else {
-            if (synth) synth.triggerAttackRelease('C5', '8n');
+        // If not a high score, just display the final state immediately
+        displayScoreFinalState(scoreBeingDisplayed);
+        drawUserPath(); // Redraw user's path with final colors and glow
+        if (isSoundEnabled && synth) { // Play regular score sound for lower scores
+            synth.triggerAttackRelease('C5', '8n');
         }
     }
-    tryAgainButton.style.display = 'block';
+
+    startButton.style.display = 'block'; // Show the start button again
 }
 
 /**
- * Displays the calculated score and a corresponding message.
- * @param {number} score - The percentage score for the drawn circle.
+ * Displays the final score and message after any animations are complete.
+ * @param {number} score - The score to display.
  */
-function displayScore(score) {
+function displayScoreFinalState(score) {
     centralScoreDisplayWrapper.classList.remove('hidden');
     centralScoreText.textContent = `${score}%`;
     centralScoreText.classList.remove('opacity-0', 'scale-50', 'hide');
@@ -513,41 +726,43 @@ function displayScore(score) {
         scoreMessage.textContent = "Stellar!";
     } else if (score >= 80) {
         scoreMessage.textContent = "Great job!";
-    } else if (score >= 60) {
+    }
+    else if (score >= 60) {
         scoreMessage.textContent = "Keep practicing!";
     } else {
         scoreMessage.textContent = "You'll get there!";
     }
     scoreMessage.classList.remove('hidden');
 
-    if (score >= 90) {
-        const rect = centralScoreDisplayWrapper.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        createParticleEffect(centerX, centerY, 50, '#FFD700');
-    }
+    // Particle effect for all scores, but especially good ones
+    const rect = drawingCanvas.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    createParticleEffect(centerX, centerY, 50, '#90EE90'); // Light green particles
 
     showMessage(""); // Clear the main message display
 }
 
+
 /**
  * Resets the game to its initial state, clearing canvases and hiding score.
+ * This is called when the "Start" button is clicked after a game has ended.
  */
 function resetGame() {
     clearDrawingCanvas();
     drawingPoints = [];
     isDrawing = false;
-    targetCircle = null;
+    targetCircle = null; // Ensure target circle is reset
     centralScoreDisplayWrapper.classList.add('hidden');
     centralScoreText.classList.remove('show');
     centralScoreText.classList.add('hide');
     scoreMessage.classList.add('hidden');
-    highScoreDisplay.classList.remove('hidden');
-    startButton.style.display = 'block';
-    tryAgainButton.style.display = 'none';
+    highScoreDisplay.classList.remove('hidden'); // Keep high score visible
+    startButton.style.display = 'block'; // Ensure start button is visible
     messageDisplay.textContent = 'Ready to draw a perfect circle?';
+    accuracyMeterWrapper.classList.add('hidden'); // Hide live accuracy meter
 
-    if (synth) synth.triggerAttackRelease('A3', '8n');
+    if (isSoundEnabled && synth) synth.triggerAttackRelease('A3', '8n');
 }
 
 // --- Event Handlers for Drawing ---
@@ -571,27 +786,32 @@ function getCanvasCoordinates(e) {
 
 /**
  * Handles pointer down events (mouse or touch).
- * Starts the drawing process and initiates the animation loop.
  * @param {PointerEvent} e - The pointer event.
  */
 function handlePointerDown(e) {
     e.preventDefault();
 
     if (e.pointerType === 'touch' && e.touches && e.touches.length > 1) {
-        return;
+        return; // Ignore multi-touch for drawing
+    }
+
+    if (!isDrawing) { // If not currently drawing, clicking canvas starts a new game
+        resetGame(); // Ensure clean state
+        startGame(); // Start drawing
     }
 
     isDrawing = true;
     drawingPoints = [getCanvasCoordinates(e)];
     messageDisplay.textContent = "Drawing...";
-    startButton.style.display = 'none';
-    tryAgainButton.style.display = 'none';
+    startButton.style.display = 'none'; // Hide the start button while drawing
     centralScoreDisplayWrapper.classList.add('hidden');
     centralScoreText.classList.remove('show');
     scoreMessage.classList.add('hidden');
-    highScoreDisplay.classList.add('hidden');
+    highScoreDisplay.classList.add('hidden'); // Hide high score during drawing
 
-    if (synth) {
+    accuracyMeterWrapper.classList.remove('hidden'); // Show live accuracy meter
+
+    if (isSoundEnabled && synth) {
         synth.triggerAttack('C5');
     }
 
@@ -615,7 +835,7 @@ function handlePointerMove(e) {
  */
 function handlePointerUp(e) {
     if (isDrawing) {
-        if (synth) synth.triggerRelease();
+        if (isSoundEnabled && synth) synth.triggerRelease();
         finishDrawing();
     }
 }
@@ -625,33 +845,47 @@ function handlePointerUp(e) {
  */
 function drawLoop() {
     if (isDrawing) {
-        // Recalculate targetCircle continuously for live feedback
-        // Only if enough points are drawn to make a meaningful circle
-        if (drawingPoints.length >= 30) {
+        if (drawingPoints.length >= 20) { // Threshold for calculating provisional score
+            // Calculate provisional target circle based on all drawn points for live accuracy
             targetCircle = calculateCircleProperties(drawingPoints);
-            if (targetCircle && targetCircle.radius > 10) { // Ensure a meaningful circle is detected
-                // Calculate and display a provisional score
+            if (targetCircle && targetCircle.radius > 5) {
                 const provisionalScore = calculateCircleScore(drawingPoints, targetCircle);
+                updateAccuracyMeter(provisionalScore); // Update meter with live accuracy
                 if (provisionalScore !== -1) {
-                    showMessage(`Accuracy: ${provisionalScore}%`, 'info');
+                    let messageType = 'info';
+                    if (provisionalScore >= 90) {
+                        messageType = 'success';
+                    } else if (provisionalScore >= 70) {
+                        messageType = 'info';
+                    } else {
+                        messageType = 'warning';
+                    }
+                    showMessage(`Accuracy: ${provisionalScore}%`, messageType);
+                    messageDisplay.classList.add('live-accuracy');
+                    messageDisplay.style.color = mapValueToColor(provisionalScore, accuracyColorScale, 0, 100);
                 } else {
-                    showMessage('Keep Drawing... (Try to form a circle!)', 'warning');
+                    showMessage('Keep Drawing... (Form a closed shape!)', 'warning');
+                    messageDisplay.classList.remove('live-accuracy');
                 }
             } else {
-                showMessage('Drawing... (Need more points for a circle!)', 'info');
+                showMessage('Drawing... (Expand your circle!)', 'info');
+                messageDisplay.classList.remove('live-accuracy');
+                updateAccuracyMeter(0); // Reset meter if no valid circle yet
             }
         } else {
-            showMessage('Drawing... (Start forming a circle!)', 'info');
+            showMessage('Drawing... (Need more points for a circle!)', 'info');
+            messageDisplay.classList.remove('live-accuracy');
+            updateAccuracyMeter(0); // Keep meter at 0 if not enough points
         }
 
-        drawUserPath(); // Redraw the current path with updated colors
+        drawUserPath();
         animationFrameId = requestAnimationFrame(drawLoop);
     }
 }
 
 // --- Tone.js Initialization ---
 /**
- * Initializes Tone.js AudioContext.
+ * Initializes Tone.js AudioContext and synth.
  * Must be called after a user gesture (e.g., button click) to bypass browser autoplay policies.
  */
 async function setupAudio() {
@@ -660,56 +894,46 @@ async function setupAudio() {
         console.log('AudioContext started');
     }
 
-    synth = new Tone.Synth({
-        oscillator: { type: "triangle" },
-        envelope: {
-            attack: 0.005,
-            decay: 0.1,
-            sustain: 0.5,
-            release: 1
-        }
-    }).toDestination();
+    if (!synth) { // Only create synth if it doesn't exist to prevent multiple instances
+        synth = new Tone.Synth({
+            oscillator: { type: "triangle" },
+            envelope: {
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0.5,
+                release: 1
+            }
+        }).toDestination();
 
-    reverb = new Tone.Reverb({
-        decay: 3,
-        preDelay: 0.2,
-        wet: 0.4
-    }).toDestination();
+        reverb = new Tone.Reverb({
+            decay: 3,
+            preDelay: 0.2,
+            wet: 0.4
+        }).toDestination();
 
-    synth.connect(reverb);
+        synth.connect(reverb);
 
-    gainNode = new Tone.Gain(0.8);
-    reverb.connect(gainNode);
-    gainNode.toDestination();
-}
-
-
-// --- Orientation Check ---
-/**
- * Checks device orientation and shows an overlay if the device is identified as mobile
- * and is currently in portrait mode. This prompts the user to rotate their device.
- */
-function checkOrientation() {
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
-
-    if (isMobile && window.innerHeight > window.innerWidth) {
-        orientationOverlay.classList.remove('hidden');
-    } else {
-        orientationOverlay.classList.add('hidden');
+        gainNode = new Tone.Gain(0.8);
+        reverb.connect(gainNode);
+        gainNode.toDestination();
     }
 }
 
+
 // --- Event Listeners ---
-window.addEventListener('resize', () => {
-    resizeCanvases();
-    checkOrientation();
+window.addEventListener('resize', resizeCanvases);
+
+// startButton always triggers a reset and then starts the game
+startButton.addEventListener('click', () => {
+    setupAudio().then(() => {
+        resetGame(); // Ensure clean state
+        startGame(); // Start drawing
+    });
 });
 
-window.addEventListener('orientationchange', checkOrientation);
+audioToggleButton.addEventListener('click', toggleSound);
 
-startButton.addEventListener('click', startGame);
-tryAgainButton.addEventListener('click', resetGame);
-
+// Pointer events on drawingCanvas will be handled based on isDrawing state
 drawingCanvas.addEventListener('pointerdown', handlePointerDown);
 drawingCanvas.addEventListener('pointermove', handlePointerMove);
 drawingCanvas.addEventListener('pointerup', handlePointerUp);
@@ -719,14 +943,21 @@ drawingCanvas.addEventListener('pointercancel', handlePointerUp);
 // Initial setup when the DOM is fully loaded and ready
 document.addEventListener('DOMContentLoaded', () => {
     resizeCanvases();
-    checkOrientation();
-    drawBackground();
+    initNebulaParticles(); // Initialize nebula particles
+    animateBackground(); // Start background animation loop
     showMessage('Ready to draw a perfect circle!');
     loadHighScore();
+    // Hide accuracy meter initially
+    accuracyMeterWrapper.classList.add('hidden');
 
-    startButton.addEventListener('click', () => {
-        setupAudio();
-    }, { once: true });
+    // Ensure sound toggle button is visually correct on load
+    if (isSoundEnabled) {
+        audioToggleButton.classList.add('audio-on', 'pulse-animation');
+        audioToggleIcon.classList.add('fa-volume-up');
+    } else {
+        audioToggleButton.classList.add('audio-off');
+        audioToggleIcon.classList.add('fa-volume-mute');
+    }
 });
 
 
@@ -761,4 +992,4 @@ function hideCustomMessage() {
     }, 300);
 }
 
-messageBoxClose.addEventListener('click', hideCustomMessage);
+messageBoxClose.addEventListener('click', hideCustomMessageBox);

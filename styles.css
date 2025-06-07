@@ -19,8 +19,7 @@
     }
     100% {
         opacity: 0;
-        transform: scale(1.5);
-        /* Use transform: translate for direction, e.g., translateX(50px) */
+        transform: scale(1.5) var(--particle-end-transform-x, 0) var(--particle-end-transform-y, 0); /* Use CSS variables for dynamic translation */
     }
 }
 
@@ -32,4 +31,79 @@
 /* Ensure canvas takes up full screen if not using fixed */
 canvas {
     display: block; /* Remove extra space below canvas */
+}
+
+/* Add styles for message display */
+.live-accuracy {
+    font-size: 1.5rem; /* Larger font for live accuracy */
+    transition: color 0.3s ease-in-out; /* Smooth color transition */
+}
+
+/* Styles for the audio toggle button (Icon Only) */
+.audio-toggle-button {
+    /* Base styles for the button itself, not the icon */
+    border-radius: 9999px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s, color 0.3s;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.4); /* Dark translucent background */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+}
+.audio-toggle-button:hover {
+    transform: scale(1.10);
+}
+.audio-toggle-button:active {
+    transform: scale(0.95);
+}
+.audio-toggle-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6, 0 1px 3px 0 rgba(0,0,0,0.1);
+}
+
+.audio-toggle-button.audio-on {
+    background: linear-gradient(to right, #22C55E, #16A34A); /* Green gradient */
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); /* Green glow */
+}
+
+.audio-toggle-button.audio-off {
+    background: linear-gradient(to right, #EF4444, #DC2626); /* Red gradient */
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); /* Red glow */
+}
+
+/* Animation for the sound icon */
+.pulse-animation {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Styles for the numerical accuracy meter (Wrapper for the text) */
+#accuracyMeterWrapper {
+    /* Position the meter directly in the center of the screen */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center horizontally and vertically */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Ensure it doesn't block drawing on canvas */
+    z-index: 15; /* Higher than canvas, lower than final score */
+    /* Remove background, border, shadow here as it's just for text now */
+}
+
+#accuracyMeterValue {
+    /* Styles for the percentage text */
+    font-size: 5rem; /* Large font size */
+    font-weight: 800; /* Extra bold */
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); /* Subtle glow */
+    transition: color 0.3s ease-in-out; /* Smooth color transition for dynamic color */
+    /* Text color will be set dynamically via JS using mapValueToColor */
 }

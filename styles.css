@@ -107,3 +107,28 @@ canvas {
     transition: color 0.3s ease-in-out; /* Smooth color transition for dynamic color */
     /* Text color will be set dynamically via JS using mapValueToColor */
 }
+
+/* Ensure the main UI container can handle centering elements when needed */
+.fixed.flex-col.justify-between.items-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* This spreads out content vertically */
+    align-items: center;
+    height: 100%;
+}
+
+/* For the bottom UI elements, use flexbox to center items */
+#postGameButtons { /* Targeting the new ID for post-game buttons */
+    display: flex;
+    flex-direction: column; /* Stacks vertically on small screens */
+    align-items: center;
+    justify-content: center;
+    gap: 1rem; /* Space between buttons */
+    width: 100%;
+}
+
+@media (min-width: 768px) { /* md breakpoint */
+    #postGameButtons {
+        flex-direction: row; /* Arranges horizontally on medium and larger screens */
+    }
+}

@@ -1,0 +1,773 @@
+/* --- General Body Styles --- */
+body {
+    font-family: 'Jost', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Use min-height to ensure it takes full viewport, but allows content to extend beyond */
+    min-height: 100vh;
+    background: radial-gradient(circle at center, #2c2c2c 0%, #1a1a1a 100%);
+    color: #f0f0f0;
+    margin: 0;
+    /* Adjust padding to be slightly more responsive on smaller screens using vmin */
+    padding: 1vmin;
+    box-sizing: border-box;
+    /* Allow body to scroll if needed, especially important on smaller screens */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
+}
+
+/* --- Common Container Styles --- */
+.screen-container {
+    background: linear-gradient(145deg, #333333, #222222);
+    /* Adjust padding with vmin for responsiveness */
+    padding: 3vmin 4vmin;
+    border-radius: 15px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+    border: 2px solid #3a3a3a;
+    text-align: center;
+    width: 100%;
+    /* Use max-width to prevent it from getting too wide on large screens */
+    max-width: 650px; /* Slightly increased max-width for better desktop feel */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* For welcome screen */
+    align-items: center;
+    position: relative;
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: auto; /* Allow natural height */
+    /* Use min-height and max-height with viewport units */
+    min-height: calc(100vh - 2vmin);
+    max-height: calc(100vh - 2vmin);
+    overflow-y: auto; /* Crucial: allow internal scrolling for the container if content exceeds height */
+    -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
+}
+
+/* --- Result Display (continued from your existing CSS) --- */
+.play-again-btn { /* Style for the "Play Next Round" button */
+    background-color: #00aaff; /* A primary blue, similar to overlay buttons */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 25px;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.95em, 2.8vw, 1.1em);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    margin-top: 15px; /* Add some space above it */
+    display: none; /* Keep it hidden by default, shown by JS */
+}
+
+.play-again-btn:hover {
+    background-color: #0088cc;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.play-again-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+/* --- Welcome Screen Styles --- */
+#welcome-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding: 2vmin; /* Adaptive padding using vmin */
+    height: 100%;
+}
+
+#welcome-screen h2 {
+    font-family: 'Montserrat', sans-serif;
+    color: #00ff99;
+    margin-bottom: 3vmin;
+    /* Use clamp for fluid font size: min, preferred(viewport-based), max */
+    font-size: clamp(1.8em, 5vw, 2.8em);
+}
+
+#welcome-screen p {
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.9em, 2.5vw, 1.2em);
+    color: #ccc;
+    margin-bottom: 2vmin;
+}
+
+#welcome-screen input[type="text"] {
+    width: 80%;
+    /* Adjust padding with vmin for responsiveness */
+    padding: 1.5vmin 2vmin;
+    margin-bottom: 3vmin;
+    border: 2px solid #00e676;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.95em, 2.8vw, 1.1em);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#welcome-screen input[type="text"]::placeholder {
+    color: #a0a0a0;
+}
+
+#welcome-screen input[type="text"]:focus {
+    border-color: #00cc66;
+}
+
+#series-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2vmin;
+    margin-bottom: 3vmin;
+    gap: 1.5vmin; /* Use vmin for responsive gap */
+}
+
+#series-selection label {
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.9em, 2.5vw, 1.1em);
+    color: #cccccc;
+}
+
+#series-length-select {
+    padding: 1.2vmin 1.8vmin; /* Use vmin for responsive padding */
+    border: 2px solid #00e676;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.9em, 2.5vw, 1.1em);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#series-length-select:focus {
+    border-color: #00cc66;
+}
+
+#start-game-btn {
+    background-color: #00e676;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    /* Adjust padding with vmin for responsiveness */
+    padding: 1.8vmin 4vmin;
+    /* Use clamp for fluid font size */
+    font-size: clamp(1em, 3vw, 1.2em);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#start-game-btn:hover {
+    background-color: #00b359;
+    transform: translateY(-2px);
+}
+
+/* --- Main Game Screen --- */
+#game-container {
+    display: none;
+    justify-content: space-between;
+    flex-direction: column;
+    /* Adjust padding with vmin for responsiveness */
+    padding-top: 8vmin;
+    padding-bottom: 3vmin;
+    min-height: 100%;
+}
+
+/* --- Player vs Computer Text --- */
+.player-vs-computer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2vmin; /* Use vmin for responsive gap */
+    margin-bottom: 2vmin;
+    /* Use clamp for fluid font size */
+    font-size: clamp(1.2em, 3.5vw, 1.6em);
+    font-weight: bold;
+    color: #cccccc;
+    flex-shrink: 0;
+}
+
+.player-vs-computer #player-name-display-game {
+    color: #00e676;
+}
+
+.player-vs-computer #computer-label {
+    color: #00aaff;
+}
+
+/* --- Series Score Display --- */
+.series-score {
+    font-family: 'Montserrat', sans-serif;
+    /* Use clamp for fluid font size */
+    font-size: clamp(1.1em, 3vw, 1.4em);
+    font-weight: bold;
+    color: #e6b800;
+    margin-bottom: 2.5vmin;
+    flex-shrink: 0;
+}
+
+/* --- Game Area (Hands Display) --- */
+.game-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4vmin; /* Use vmin for responsive gap */
+    margin-bottom: 2.5vmin;
+    /* Use viewport units for min-height */
+    min-height: 25vmin;
+    flex-shrink: 1;
+    flex-grow: 1;
+    position: relative;
+}
+
+.hand {
+    /* Use viewport units for dimensions for proportional scaling */
+    width: 20vmin;
+    height: 20vmin;
+    background-color: transparent;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(0);
+    transition: transform 0.2s ease-out;
+    transform-origin: bottom center;
+}
+
+#player-hand img, #computer-hand img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.5));
+}
+
+#computer-hand img {
+    transform: scaleX(-1);
+}
+
+.hand.hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+}
+
+/* --- Impact Effect --- */
+.impact-effect {
+    position: absolute;
+    /* Scale effect size with vmin */
+    width: 9vmin;
+    height: 9vmin;
+    background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 140, 0, 0.5));
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    animation: impact-burst 0.3s ease-out forwards;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+}
+
+@keyframes impact-burst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
+    }
+}
+
+/* --- Animations (no changes to keyframes, they are relative transforms) --- */
+@keyframes handShakePlayer {
+    0%, 100% { transform: translateY(0) rotateZ(0deg); }
+    25% { transform: translateY(-15px) rotateZ(-10deg); }
+    75% { transform: translateY(-15px) rotateZ(10deg); }
+}
+
+@keyframes handShakeComputer {
+    0%, 100% { transform: translateY(0) rotateZ(0deg); }
+    25% { transform: translateY(-15px) rotateZ(10deg); }
+    75% { transform: translateY(-15px) rotateZ(-10deg); }
+}
+
+@keyframes handReveal {
+    0% { opacity: 0; transform: translateY(20px) scale(0.8); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Countdown Animation (New) --- */
+.game-message.countdown-animate {
+    /* Use clamp for fluid font size for countdown */
+    font-size: clamp(2em, 6vw, 3em);
+    animation: countdown-pulse 0.8s ease-out forwards, countdown-color 0.8s ease-out forwards;
+    color: #00ff99;
+    text-shadow: 0 0 8px rgba(0, 255, 153, 0.7);
+}
+
+@keyframes countdown-pulse {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes countdown-color {
+    0% { color: #00ff99; } /* Greenish */
+    33% { color: #ffff00; } /* Yellowish */
+    66% { color: #ff00ff; } /* Purplish */
+    100% { color: #f0f0f0; } /* Fade back to white */
+}
+
+
+/* --- Choice Buttons (initially visible, hidden during round) --- */
+.choices {
+    display: flex;
+    justify-content: center;
+    gap: 3vmin; /* Use vmin for responsive gap */
+    margin-bottom: 2.5vmin;
+    flex-wrap: wrap; /* Allows buttons to wrap to the next line on smaller screens */
+    flex-shrink: 0;
+}
+
+.choices.hidden {
+    opacity: 0;
+    height: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+}
+
+.choice-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1vmin; /* Use vmin for responsive gap */
+
+    background-color: #3b3b3b;
+    border: 2px solid #5a5a5a;
+    border-radius: 10px;
+    padding: 1vmin; /* Use vmin for responsive padding */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    /* Use viewport units for flexible sizing, and max-width/min-width to prevent stretching */
+    width: 18vmin;
+    height: 18vmin;
+    max-width: 130px; /* Maximum size to prevent excessively large buttons on big screens */
+    max-height: 130px; /* Maximum size */
+    min-width: 80px; /* Minimum size to ensure tap targets are large enough on small screens */
+    min-height: 80px; /* Minimum size */
+    overflow: hidden;
+}
+
+.choice-btn:hover {
+    background-color: #4a4a4a;
+    border-color: #00e676;
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+.choice-btn:active {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    background-color: #3a3a3a;
+    border-color: #00cc66;
+}
+
+.choice-btn .choice-img {
+    /* Scale relative to the button's size */
+    width: 70%;
+    height: 70%;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.5));
+}
+
+.choice-btn span {
+    font-family: 'Jost', sans-serif;
+    color: #e0e0e0;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.8em, 2.2vw, 1em);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+
+/* --- Result Display --- */
+.result-display {
+    min-height: 10vmin; /* Use vmin for responsive minimum height */
+    margin-top: 2.5vmin;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.result-message {
+    font-family: 'Montserrat', sans-serif;
+    /* Use clamp for fluid font size */
+    font-size: clamp(1.4em, 4vw, 2em);
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-top: 1vmin;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+}
+
+.result-message.win { color: #00e676; }
+.result-message.lose { color: #ff3333; }
+.result-message.tie { color: #e6b800; }
+
+/* New class for enhanced series win/loss message */
+.result-message.series-end {
+    /* Larger size for series end using clamp */
+    font-size: clamp(1.8em, 5vw, 2.5em);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* --- Victory/Defeat Overlay --- */
+#game-over-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    gap: 3vmin; /* Use vmin for responsive gap */
+}
+
+#game-over-overlay.visible {
+    display: flex;
+    opacity: 1;
+}
+
+#overlay-message {
+    font-family: 'Montserrat', sans-serif;
+    /* Use clamp for very large fluid font size for overlay messages */
+    font-size: clamp(2.5em, 8vw, 4em);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.3);
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+    animation: overlay-text-in 0.8s ease-out forwards;
+}
+
+#overlay-message.win-color { color: #00ff99; }
+#overlay-message.lose-color { color: #ff6666; }
+
+@keyframes overlay-text-in {
+    0% { opacity: 0; transform: translateY(-20px) scale(0.8); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.overlay-buttons {
+    display: flex;
+    gap: 2vmin; /* Use vmin for responsive gap */
+    margin-top: 0;
+    flex-wrap: wrap; /* Allow buttons to wrap if screen is very narrow */
+    justify-content: center; /* Center buttons when wrapped */
+}
+
+.replay-series-btn, .main-menu-btn {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #00aaff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    /* Adjust padding with vmin for responsiveness */
+    padding: 1.5vmin 3vmin;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.9em, 2.5vw, 1.1em);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    display: none;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+}
+
+.replay-series-btn:hover, .main-menu-btn:hover {
+    background-color: #0088cc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Score Board (at bottom) --- */
+.score-board-bottom {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 1.5vmin 0; /* Use vmin for responsive padding */
+    margin-top: 2.5vmin;
+    border-top: 1px solid #4a4a4a;
+    flex-shrink: 0;
+    flex-wrap: wrap; /* Allow score items to wrap if needed */
+}
+
+.score-item {
+    flex-basis: 30%; /* Give each item a flexible width */
+    min-width: 80px; /* Prevent items from becoming too narrow on small screens */
+    text-align: center;
+    margin-bottom: 1vmin; /* Add a little margin for wrapping when flex-wrapped */
+}
+
+.score-item p {
+    margin: 0;
+    /* Use clamp for fluid font size */
+    font-size: clamp(0.8em, 2vw, 1em);
+    color: #cccccc;
+}
+
+.score-item span {
+    font-family: 'Montserrat', sans-serif;
+    display: block;
+    /* Use clamp for fluid font size */
+    font-size: clamp(1.5em, 4vw, 2.2em);
+    font-weight: bold;
+    margin-top: 1vmin;
+}
+.score-item.won span { color: #00e676; }
+.score-item.lost span { color: #ff3333; }
+.score-item.draw span { color: #e6b800; }
+/* --- Game Controls (Sound/Share Buttons) - Top Right Positioning --- */
+.game-controls {
+    position: absolute;
+    top: 1.5vmin; /* Use vmin for responsive positioning */
+    right: 1.5vmin; /* Use vmin for responsive positioning */
+    display: flex;
+    gap: 1.2vmin; /* Use vmin for responsive gap */
+    z-index: 20;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.control-btn {
+    background-color: #555;
+    color: #f0f0f0;
+    border: none;
+    border-radius: 5px;
+    padding: 0.8vmin; /* Use vmin for responsive padding */
+    /* Use clamp for fluid icon size */
+    font-size: clamp(1em, 2.5vw, 1.4em);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    /* Use viewport units for button size, with min/max for control */
+    width: 6vmin;
+    height: 6vmin;
+    min-width: 30px; /* Minimum size to ensure tap target is large enough */
+    min-height: 30px;
+    max-width: 45px; /* Maximum size to prevent excessively large buttons */
+    max-height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.control-btn:hover {
+    background-color: #777;
+    transform: none;
+}
+
+#sound-toggle-btn.on {
+    background-color: #00e676;
+    color: #1a1a1a;
+}
+
+#sound-toggle-btn.on:hover {
+    background-color: #00b359;
+}
+
+/* --- Confetti Effect (no changes needed, as it relies on JS positioning and simple scaling) --- */
+#confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: confetti-fall 2s forwards ease-out;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100px) rotateZ(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotateZ(720deg);
+        opacity: 0;
+    }
+}
+
+
+/* --- Media Queries (Refined and simplified due to extensive use of clamp/vmin) --- */
+
+/* For devices with a very small width (e.g., older smartphones in portrait, narrow screens) */
+@media (max-width: 380px) {
+    .screen-container {
+        padding: 2vmin;
+        /* Allow more internal scrolling space if needed on very small screens */
+        min-height: calc(100vh - 4vmin);
+        max-height: calc(100vh - 4vmin);
+    }
+    .player-vs-computer {
+        flex-direction: column; /* Stack player/vs/computer vertically for narrow screens */
+        gap: 0.5vmin;
+    }
+    .game-area {
+        flex-direction: column; /* Stack hands vertically on narrow screens */
+        gap: 2vmin;
+    }
+    #computer-hand img {
+         transform: scaleX(1); /* Don't mirror computer hand on very small screens if stacked */
+    }
+    .choices {
+        flex-direction: column; /* Stack choice buttons vertically */
+        gap: 1vmin;
+        align-items: center; /* Center stacked buttons */
+    }
+    .choice-btn {
+        width: 80%; /* Make buttons wider when stacked */
+        max-width: 200px; /* Limit max width of stacked buttons */
+        height: auto; /* Auto height for stacked buttons, allowing content to dictate */
+        flex-direction: row; /* Layout icon and text horizontally within the button */
+        justify-content: center;
+        gap: 2vmin;
+        padding: 1.5vmin 2vmin;
+    }
+    .choice-btn .choice-img {
+        width: 40px; /* Fixed pixel size for icons when buttons are wide */
+        height: 40px;
+    }
+    .score-board-bottom {
+        flex-direction: column; /* Stack score items vertically */
+        gap: 1.5vmin;
+    }
+    .score-item {
+        flex-basis: auto; /* Take full width when stacked */
+    }
+}
+
+/* Landscape mode adjustments for mobile devices (adjust as needed for specific layouts) */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .screen-container {
+        flex-direction: row; /* Try to arrange main elements side-by-side in landscape */
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        padding: 2vmin;
+        min-height: 90vh; /* Adjust height for landscape orientation */
+        max-height: 90vh;
+        overflow-y: auto; /* Keep scrolling in case content is too much */
+    }
+    #welcome-screen {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2vmin;
+    }
+    #welcome-screen h2, #welcome-screen p, #player-name-input, #series-selection, #start-game-btn {
+        margin-bottom: 0.5vmin; /* Reduce vertical margins for landscape */
+    }
+    #game-container {
+        padding-top: 2vmin;
+        padding-bottom: 2vmin;
+        flex-direction: row; /* Arrange game elements horizontally */
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        gap: 2vmin;
+        min-height: 90vh; /* Adjust height for landscape */
+    }
+    .game-controls {
+        position: static; /* Let them flow with content in landscape */
+        margin-bottom: 2vmin;
+        width: 100%;
+        justify-content: flex-end; /* Align to the right */
+    }
+    .player-vs-computer, .series-score {
+        width: 100%; /* Ensure these take full width */
+        margin-bottom: 1vmin;
+    }
+    .game-area {
+        flex-basis: 45%; /* Take up half width for hands */
+        min-height: 15vmin;
+        gap: 2vmin;
+    }
+    .choices {
+        flex-basis: 45%; /* Take up other half width for choices */
+        gap: 1vmin;
+        justify-content: center;
+    }
+    .choice-btn {
+        width: 15vmin;
+        height: 15vmin;
+        max-width: 100px; /* Keep buttons somewhat small in landscape */
+        max-height: 100px;
+        flex-direction: column; /* Back to column for better button shape */
+    }
+    .result-display {
+        flex-basis: 100%; /* Result message spans full width */
+        min-height: 8vmin;
+        margin-top: 1vmin;
+    }
+    .play-again-btn {
+        margin-top: 0.5vmin;
+    }
+    .score-board-bottom {
+        width: 100%;
+        flex-direction: row;
+        gap: 1vmin;
+    }
+    .score-item {
+        flex-basis: 30%; /* Remain 30% for even distribution */
+    }
+}
